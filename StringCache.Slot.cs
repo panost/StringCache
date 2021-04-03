@@ -34,7 +34,7 @@ namespace ecl.Collections {
         
         private class Slot {
             public int Count;
-            private Entry[] _entries;
+            private readonly Entry[] _entries;
             private readonly int[] _buckets;
             private readonly ulong _fastModBucketsMultiplier;
 
@@ -117,8 +117,8 @@ namespace ecl.Collections {
 
                 if ( Count == _entries.Length ) {
                     var slot = Resize();
-                    owner._slot = slot;
                     slot.Add( str, hashCode );
+                    owner._slot = slot;
                 } else {
                     _entries[ Count++ ].Set( str, hashCode, lead );
                     lead = Count;
