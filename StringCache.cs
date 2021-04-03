@@ -80,12 +80,6 @@ namespace ecl.Collections {
             return idx >= 0 ? slot[ idx ] : Parent?.Get( key, hashCode );
         }
 
-        private string GetOrAdd( ReadOnlySpan<char> key, int hashCode ) {
-            var slot = Volatile.Read( ref _slot );
-            int idx = slot.IndexOf( key, hashCode );
-            return idx >= 0 ? slot[ idx ] : Parent?.Get( key, hashCode );
-        }
-
         public string Get( ReadOnlySpan<char> key ) {
             return Get( key, GetOrdinalHashCode( key ) );
         }
@@ -115,13 +109,13 @@ namespace ecl.Collections {
 
         private string Add( ReadOnlySpan<char> key, int hashCode ) {
             lock ( _addition ) {
-                return _slot.Insert( this, key, hashCode );
+                return _slot.Insert( this, key, hashCode, null );
             }
         }
 
         private string Add( string key, int hashCode ) {
             lock ( _addition ) {
-                return _slot.Insert( this, key, hashCode );
+                return _slot.Insert( this, key, hashCode, key );
             }
         }
 

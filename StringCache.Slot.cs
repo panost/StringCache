@@ -31,9 +31,7 @@ namespace ecl.Collections {
             }
             return i;
         }
-        private static int NearestPowerOf2( uint x ) {
-            return 1 << ( sizeof( uint ) * 8 - BitOperations.LeadingZeroCount( x - 1 ) );
-        }
+        
         private class Slot {
             public int Count;
             private Entry[] _entries;
@@ -102,30 +100,8 @@ namespace ecl.Collections {
                 slot.Add( _entries );
                 return slot;
             }
-            public string Insert( StringCache owner, string str, int hashCode ) {
-                ref int lead = ref GetBucketSlot( hashCode );
-                int i = lead;
-                while ( i > 0 ) {
-                    i--;
-                    ref var ptr = ref _entries[ i ];
 
-                    if ( ptr.HashCode == hashCode && str == ptr.Key )
-                        return ptr.Key;
-                    i = ptr.Next;
-                }
-
-                if ( Count == _entries.Length ) {
-                    var slot = Resize();
-                    owner._slot = slot;
-                    slot.Add( str, hashCode );
-                } else {
-                    _entries[ Count++ ].Set( str, hashCode, lead );
-                    lead = Count;
-                }
-
-                return str;
-            }
-            public string Insert( StringCache owner, ReadOnlySpan<char> key, int hashCode ) {
+            public string Insert( StringCache owner, ReadOnlySpan<char> key, int hashCode, string str ) {
                 ref int lead = ref GetBucketSlot( hashCode );
                 int i = lead;
                 while ( i > 0 ) {
@@ -136,7 +112,8 @@ namespace ecl.Collections {
                         return ptr.Key;
                     i = ptr.Next;
                 }
-                string str = new string( key );
+
+                str ??= new string( key );
 
                 if ( Count == _entries.Length ) {
                     var slot = Resize();
