@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace ecl.Collections {
+
     partial class StringCache {
-        [DebuggerDisplay("Entry:{Key}, {HashCode}, {Next}")]
+
+        [DebuggerDisplay( "Entry:{Key}, {HashCode}, {Next}" )]
         internal struct Entry {
             public int HashCode;
             public int Next;
@@ -18,12 +19,15 @@ namespace ecl.Collections {
                 Next = next;
             }
         }
+
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static uint FastMod( uint value, uint divisor, ulong multiplier ) {
             return (uint)( ( ( ( ( multiplier * value ) >> 32 ) + 1 ) * divisor ) >> 32 );
         }
+
         public static ulong GetFastModMultiplier( uint divisor ) =>
             ulong.MaxValue / divisor + 1;
+
         public static int NextOdd( int i ) {
             i |= 1;
             while ( i % 3 == 0 || i % 5 == 0 || i % 7 == 0 ) {
@@ -31,14 +35,14 @@ namespace ecl.Collections {
             }
             return i;
         }
-        
+
         private class Slot {
             public int Count;
             private readonly Entry[] _entries;
             private readonly int[] _buckets;
             private readonly ulong _fastModBucketsMultiplier;
 
-            public Slot(int capacity, int prime) {
+            public Slot( int capacity, int prime ) {
                 _fastModBucketsMultiplier = IntPtr.Size == 8 ? GetFastModMultiplier( (uint)prime ) : 0;
                 _buckets = new int[ prime ];
                 _entries = new Entry[ capacity ];
@@ -50,7 +54,7 @@ namespace ecl.Collections {
                     capacity = 16;
                 }
                 _entries = new Entry[ capacity ];
-                _buckets = new int[ NextOdd(capacity) ];
+                _buckets = new int[ NextOdd( capacity ) ];
                 _fastModBucketsMultiplier = IntPtr.Size == 8 ? GetFastModMultiplier( (uint)_buckets.Length ) : 0;
                 foreach ( string s in set ) {
                     Add( s, GetOrdinalHashCode( s ) );
@@ -59,6 +63,7 @@ namespace ecl.Collections {
 
             public string this[ int index ] => _entries[ index ].Key;
 
+            [MethodImpl( MethodImplOptions.AggressiveInlining )]
             private ref int GetBucketSlot( int hashCode ) {
                 int[] buckets = _buckets;
 
@@ -74,12 +79,14 @@ namespace ecl.Collections {
                 _entries[ Count++ ].Set( key, hashCode, i );
                 i = Count;
             }
+
             private void Add( Entry[] entries ) {
                 for ( int j = 0; j < entries.Length; j++ ) {
                     ref Entry ptr = ref entries[ j ];
                     Add( ptr.Key, ptr.HashCode );
                 }
             }
+
             public int IndexOf( ReadOnlySpan<char> key, int hashCode ) {
                 int i = GetBucketSlot( hashCode );
                 while ( i > 0 ) {
@@ -92,6 +99,20 @@ namespace ecl.Collections {
                 }
 
                 return -1;
+            }
+
+            public string Find( ReadOnlySpan<char> key, int hashCode ) {
+                int i = GetBucketSlot( hashCode );
+                while ( i > 0 ) {
+                    i--;
+                    ref var ptr = ref _entries[ i ];
+
+                    if ( ptr.HashCode == hashCode && key.SequenceEqual( ptr.Key ) )
+                        return ptr.Key;
+                    i = ptr.Next;
+                }
+
+                return null;
             }
 
             private Slot Resize() {

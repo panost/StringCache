@@ -55,8 +55,8 @@ namespace ecl.Collections {
 
         public static int GetOrdinalHashCode( ReadOnlySpan<char> span ) {
             uint hash = CaseSensitiveSeed;
-            for ( int i = 0; i < span.Length; i++ ) {
-                hash = ( BitOperations.RotateLeft( hash, 5 ) + hash ) ^ span[ i ];
+            foreach ( var ch in span ) {
+                hash = ( BitOperations.RotateLeft( hash, 5 ) + hash ) ^ ch;
             }
 
             return (int)hash;
@@ -73,7 +73,13 @@ namespace ecl.Collections {
 
             return null;
         }
-
+        public string GetF( ReadOnlySpan<char> key, int hashCode ) {
+            return _slot.Find( key, hashCode ) ?? Parent?.GetF( key, hashCode );
+        }
+        public string GetF( ReadOnlySpan<char> key ) {
+            int hashCode = GetOrdinalHashCode( key );
+            return GetF( key, hashCode );
+        }
         private string Get( ReadOnlySpan<char> key, int hashCode ) {
             var slot = Volatile.Read( ref _slot );
             int idx = slot.IndexOf( key, hashCode );
